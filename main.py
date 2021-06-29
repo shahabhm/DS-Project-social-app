@@ -1,19 +1,19 @@
 from disk_manager import DiskManager
 from challenge import Challenge
+from shutil import copyfile #delete at the end
 
+copyfile("dataset_backup", "dataset_100000.d") #regenereate the dataset- delete at the end
 dm = DiskManager()
 
 try:
     app = Challenge(dm)
-
-    events_and_queries = [
-        "1 1 210"
-        "0 1 10001 hamed 1618497229",
-        "0 2 21 1 1618497229",
-        "1 2 210 1618497229",
-        "0 4 210 120 0",
-        "0 3 210 120 0"
-    ]
+    events_and_queries = []
+    while True:
+        line = input()
+        if line == "end":
+            break
+        else:
+            events_and_queries.append(line)
 
     app.run(events_and_queries)
 finally:

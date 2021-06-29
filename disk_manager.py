@@ -15,7 +15,6 @@ class DiskManager:
         self.disks = dict()
         self.cost = 0
         self.scan_disks()
-        # self.shuffle()
 
     def scan_disks(self) -> None:
         this_dir = os.getcwd()
@@ -27,21 +26,6 @@ class DiskManager:
                     'size': int(file_name[1]),
                     'cursor': 0
                 }
-
-    # def shuffle(self) -> None:
-    #     disk_names = self.disks.keys()
-    #     for disk in disk_names:
-    #         new_name = str(random.randint(1, 99999)) + '.'
-    #         new_name += str(datetime.datetime.now()) + '_' + str(self.disks[disk]['size']) + '.d'
-    #         os.rename(self.disks[disk]['path'], new_name)
-    #         self.disks[disk]['original_path'] = self.disks[disk]['path']
-    #         self.disks[disk]['path'] = new_name
-    #
-    # def de_shuffle(self):
-    #     disk_names = self.disks.keys()
-    #     for disk in disk_names:
-    #         os.rename(self.disks[disk]['path'], self.disks[disk]['original_path'])
-    #         self.disks[disk]['path'] = self.disks[disk]['original_path']
 
     def new(self, disk_name: str, disk_size: int) -> int:
         if disk_name in self.disks.keys():
@@ -106,7 +90,7 @@ class DiskManager:
                 "block size limit is {} lines "
                 "but you tried to write {} lines! ".format(data_length, self.BLOCK_SIZE))
 
-        normalized = []
+        normalized = ""
         for d in data:
             d_length = len(d)
             diff = self.ENTRY_LENGTH - d_length - 2

@@ -129,3 +129,5 @@ dmypy.json
 .pyre/
 
 /dataset_100000.d
+/Challenge (1).zip
+/dataset_backup
