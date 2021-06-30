@@ -1,8 +1,10 @@
 from disk_manager import DiskManager
 from challenge import Challenge
 from shutil import copyfile #delete at the end
-
-copyfile("dataset_backup", "dataset_100000.d") #regenereate the dataset- delete at the end
+try:
+    copyfile("dataset_backup", "dataset_100000.d") #regenereate the dataset- delete at the end
+except:
+    print("couldn't find the backup dataset. please insert dataset manually")
 dm = DiskManager()
 
 try:
