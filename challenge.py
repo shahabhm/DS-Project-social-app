@@ -32,7 +32,7 @@ class Challenge:
         print('seeking to previous line => now we are at first of line: 100')
 
         print('writing i')
-        self.dm.write_block('dataset', [first_block[0], first_block[1]])
+        self.dm.write_block('dataset', first_block[0:10])
         print('writing two lines into line 100 % 101 () => now we are at first of line: 102')
         print('note that we are allowed to write 100 lines (block_size) into the whole block starting from line 100, ')
         print('but here we just replace two lines.')
