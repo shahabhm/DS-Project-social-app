@@ -1,6 +1,8 @@
 from disk_manager import DiskManager
 from challenge import Challenge
-from shutil import copyfile #delete at the end
+# delete at the end
+from shutil import copyfile
+
 try:
     copyfile("dataset_backup", "dataset_100000.d") #regenereate the dataset- delete at the end
 except:
@@ -19,5 +21,4 @@ try:
 
     app.run(events_and_queries)
 finally:
-    # dm.de_shuffle()
     pass
