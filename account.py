@@ -13,7 +13,7 @@ class account:
             self.status = False
         else:
             self.status = True
-        self.connections = dict(data[2:-2]) # python dict is the best data structure for search
+        self.connections = dict(data[2:-3]) # python dict is the best data structure for search
 
     def __hash__(self):
         # necessary for instances to behave sanely in dicts and sets.

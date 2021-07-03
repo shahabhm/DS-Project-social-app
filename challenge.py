@@ -17,25 +17,27 @@ class Challenge:
 
     def run(self, events_or_queries):
         for line in events_or_queries:
-            if line.startswith(self.code_create_new_account):
-                self.create_account(line.replace(self.code_create_new_account, "", 1))
-            elif line.startswith(self.code_change_online_status):
-                self.change_online_status(line.replace(self.code_change_online_status,"",1))
-            else:
-                print("unknown command code")
-
-    '''
-    questinos:
-    1- does this give an id already used?
-    '''
+            try:
+                if line.startswith(self.code_create_new_account):
+                    self.create_account(line.replace(self.code_create_new_account, "", 1))
+                elif line.startswith(self.code_change_online_status):
+                    self.change_online_status(line.replace(self.code_change_online_status, "", 1))
+                elif line.startswith(self.code_follow_unfollow):
+                    self.follow_unfollow(line.replace(self.code_follow_unfollow, "", 1))
+                else:
+                    print("unknown command code")
+            except:
+                print(f"encountered error in line: {line}")
 
     def create_account(self, command):
         new_id, name, last_seen = command.split(" ")
+        new_account_string = " ".join([new_id, name, "0", "online", last_seen])
+        new_id = int(new_id)
         if self.cache.does_id_exist(new_id):
             print("this id already exists, please select a new one")
         else:
-            self.cache.create_new_account(new_account=" ".join([id, name, 0, "online", last_seen]),
-                                          new_account_id=int(new_id))
+            self.cache.create_new_account(new_account=new_account_string,
+                                          new_account_id=new_id)
 
     def change_online_status(self, command):
         account_id, online, last_seen = command.split(" ")
@@ -48,3 +50,8 @@ class Challenge:
             print("this id does not exist")
         else:
             self.cache.change_online_status(account_id, online, last_seen)
+        return
+
+    def follow_unfollow(self, command):
+        pass
+

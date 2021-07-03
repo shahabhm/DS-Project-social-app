@@ -16,6 +16,9 @@ try:
         line = input()
         if line == "end":
             break
+        elif line == "save end":
+            # app.cache.dump() // in case we needed to save the cached data before exit
+            pass
         else:
             events_and_queries.append(line)
 

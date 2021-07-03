@@ -9,21 +9,21 @@ class cache_manager:
     recently_created_accounts_limit = 50
     cache_block_0 = {}
     cache_block_1 = {}
-    dirty_0 :bool = False
-    dirty_1 :bool = False
+    dirty_0: bool = False
+    dirty_1: bool = False
     used_0 = 0
     used_1 = 0
     start_1 = 1
     start_0 = 1
     # note: we have to declare this for every account because an unblock need recalculating the whole dataset
     # blocked_bloom = []
-    # blocked bloom size is equal to one cache block
+    # blocked bloom size is of order of one cache block
     dataset_accounts_count = 10000
 
     def __init__(self, disk_manager):
         self.dm = disk_manager
 
-    def does_id_exist(self, new_id):
+    def does_id_exist(self, new_id: int):
         return new_id < self.dataset_accounts_count
 
     def create_new_account(self, new_account_id, new_account: str):
@@ -40,58 +40,67 @@ class cache_manager:
         self.dataset_accounts_count += 1
         return
 
-    def change_online_status(self, account_id: str, online: bool, last_seen: str):
+    def change_online_status(self, account_id: int, online: bool, last_seen: str):
         pass
 
     def find_account(self, id: int) -> account:
-        if self.most_accessed_accounts.__contains__(id):
-            pass
-        elif self.recently_created_accounts.__contains__(id):
-            pass
-        elif self.cache_block_0.__contains__(id):  # can be done more easily by index counting
-            pass
-        elif self.cache_block_1.__contains__(id):
-            pass
-        else:
-            self.update_cache(id)
-            return self.find_account(id)
+        res = None
+        res = self.most_accessed_accounts.get(id)
+        if res is not None:
+            return res
+        res = self.recently_created_accounts.get(id)
+        if res is not None:
+            return res
+        res = self.cache_block_0.get(id)
+        if res is not None:
+            return res
+        res = self.cache_block_1.get(id)
+        if res is not None:
+            return res
+        self.update_cache(id)
+        return self.find_account(id)
 
-    def update_cache(self, id:int):
+    def update_cache(self, id: int):
         if self.used_0 > 2 * self.used_1:
             if self.dirty_1:
                 self.write_back(self.cache_block_1, start=self.start_1)
+                self.dirty_1 = False
             self.cache_block_1 = self.fetch_block_for_id(id)
+            self.used_0 /= 2
         elif self.used_1 > 2 * self.used_0:
             if self.dirty_0:
                 self.write_back(self.cache_block_0, start=self.start_0)
-            self.cache_block_0 = self.fetch_block_for_id(id)
+                self.dirty_0 = False
+            self.cache_block_0, self.start_0 = self.fetch_block_for_id(id)
+            self.used_1 /= 2
         # two blocks are the same
         elif not self.dirty_0:
-            self.cache_block_0 = self.fetch_block_for_id(id)
+            self.cache_block_0, self.start_0 = self.fetch_block_for_id(id)
+            self.used_0 = 0
         elif not self.dirty_1:
-            self.cache_block_1 = self.fetch_block_for_id(id)
-        else :
+            self.cache_block_1, self.start_1 = self.fetch_block_for_id(id)
+            self.used_1 = 0
+        else:
             if self.used_0 > self.used_1:
-                self.write_back(self.cache_block_1,start=self.start_1)
-                self.cache_block_1 = self.fetch_block_for_id(id)
-            else :
-                self.write_back(self.cache_block_0,start=self.start_0)
-                self.cache_block_0 = self.fetch_block_for_id(id)
+                self.write_back(self.cache_block_1, start=self.start_1)
+                self.cache_block_1, self.start_1 = self.fetch_block_for_id(id)
+
+            else:
+                self.write_back(self.cache_block_0, start=self.start_0)
+                self.cache_block_0, self.start_0 = self.fetch_block_for_id(id)
 
     def write_back(self, cache_block: dict, start: int):
-        res = ""
+        res = []
         for user in cache_block.values():
-            res += user.__str__()
-            res += "$\n"
+            res.append(user)
         self.dm.disk_seek(start)
         self.dm.write_block(res)
 
     def fetch_block_for_id(self, id: int):
-        seek = id-50
-        if id<50:
+        seek = id - 50
+        if id < 50:
             seek = 0
-        elif id > self.dataset_accounts_count-50:
-            seek = self.dataset_accounts_count-100
+        elif id > self.dataset_accounts_count - 50:
+            seek = self.dataset_accounts_count - 100
         self.dm.seek(seek)
-        return self.dm.read_block()
-
+        return self.dm.read_block(), seek
