@@ -9,7 +9,6 @@ class Challenge:
     code_follow_unfollow = "0 4 "
     code_find_online_friends = "1 1 "
     code_recommend_accounts_to_follow = "1 2 "
-
     # endregion
 
     def __init__(self, disk_manager):
@@ -25,6 +24,12 @@ class Challenge:
                     self.change_online_status(line.replace(self.code_change_online_status, "", 1))
                 elif line.startswith(self.code_follow_unfollow):
                     self.follow_unfollow(line.replace(self.code_follow_unfollow, "", 1))
+                elif line.startswith(self.code_block_unblock):
+                    self.block_unblock(line.replace(self.code_block_unblock, "", 1))
+                elif line.startswith(self.code_find_online_friends):
+                    self.find_online_friends(line.replace(self.code_find_online_friends, "", 1))
+                elif line.startswith(self.code_recommend_accounts_to_follow):
+                    self.recommend_new_accounts(line.replace(self.code_recommend_accounts_to_follow, "", 1))
                 else:
                     print("unknown command code")
             except:
@@ -61,4 +66,18 @@ class Challenge:
         return
 
     def follow_unfollow(self, command):
-        pass
+        id_1, id_2, follow = command.split(" ")
+        id_1, id_2 = int(id_1), int(id_2)
+        follow = False if follow == "0" else True
+        self.cache.follow_unfollow(id_1=id_1, id_2=id_2, follow=follow)
+        return
+
+    def find_online_friends(self, command):
+        account_id = int(command)
+        self.cache.find_online_friends(account_id)
+        return
+
+    def recommend_new_accounts(self, command):
+        account_id, time = int(command.split(" "))  # todo: will this work?
+        self.cache.recommend_new_accounts(account_id=account_id, time=time)
+        return

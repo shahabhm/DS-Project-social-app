@@ -9,18 +9,15 @@ class account:
         self.id = int(data[0])
         self.name = data[1]
         self.last_seen = int(data[-1])
-        if data[-2] == "online":
+        if data[-1] == "online":
             self.status = False
         else:
             self.status = True
         self.connections = set()
         self.blocked = set()
-        self.blocked_by = set()
-        for relation in data[2:-3]:
+        for relation in data[3:-2]:
             if relation.startswith("-"):
                 self.blocked.add(relation)
-            elif relation.startswith("*"):  # means this is blocked by another account
-                self.blocked_by.add(relation)
             else:
                 self.connections.add(relation)
 
@@ -36,5 +33,5 @@ class account:
             online = " online "
         else:
             online = " offline "
-        return str(self.id) + " " + self.name + " ".join(self.connections) +\
-               " -".join(self.blocked) + " *".join(self.blocked_by) + online + str(self.last_seen)
+        return str(self.id) + " " + self.name + " " + str(len(self.connections)) + " " + " ".join(self.connections) + \
+            " -".join(self.blocked) + online + str(self.last_seen)

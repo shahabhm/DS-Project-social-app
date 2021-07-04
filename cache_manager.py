@@ -1,5 +1,6 @@
 import itertools
 from account import account
+from bloomfilter import bloomfilter
 
 
 class cache_manager:
@@ -22,6 +23,12 @@ class cache_manager:
 
     def __init__(self, disk_manager):
         self.dm = disk_manager
+        self.recommend_cache = disk_manager.new("recommend", 100000)
+        for i in range (0,101):
+            res = []
+            for j in range(1,101):
+                res.append(str(100*i+j))
+            disk_manager.write_block("recommend", res)
 
     def does_id_exist(self, new_id: int):
         return new_id < self.dataset_accounts_count
@@ -111,7 +118,6 @@ class cache_manager:
             # now for blocked account
             acc = self.find_account(id_2)
             acc.connections.remove(str(id_1))
-            acc.blocked_by.add("*" + str(id_1))
             self.blocked_bloom[id_1] = self.update_bloom(acc.blocked)
         else:
             pass
@@ -126,5 +132,38 @@ class cache_manager:
         return self.dm.read_block(), seek
 
     # this creates the bloom based on the blocked and blocker accounts for an account
-    def update_bloom(self, acc:account):
+    def update_bloom(self, acc: account):
         pass
+
+    def is_blocked(self, account_id: int, destination_id: int) -> bool:
+        acc = self.find_account(destination_id)
+        if acc.blocked.__contains__(account_id):
+            return True
+        return False
+
+    def follow_unfollow(self, id_1: int, id_2: int, follow: bool):
+        acc = self.find_account(id=id_1)
+        if follow:
+            if acc.blocked.__contains__(id_2):
+                print("can't follow: you have blocked this user")
+            elif self.is_blocked(account_id=id_1, destination_id=id_2):
+                print("can't follow: you have been blocked by this user")
+            else:
+                acc.connections.add(id_2)
+        else:
+            acc.connections.remove(id_2)
+
+    def find_online_friends(self, account_id: int):
+        acc = self.find_account(account_id)
+        res = []
+        for friend in acc.connections:
+            friend_acc = self.find_account(int(friend))
+            if friend_acc.status:
+                res.__add__(friend)
+        print(res)
+        return
+
+    # do we need a new disk for this one?
+    def recommend_new_accounts(self, account_id: int, time: int):
+        pass
+
