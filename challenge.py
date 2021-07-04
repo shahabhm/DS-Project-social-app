@@ -9,6 +9,7 @@ class Challenge:
     code_follow_unfollow = "0 4 "
     code_find_online_friends = "1 1 "
     code_recommend_accounts_to_follow = "1 2 "
+
     # endregion
 
     def __init__(self, disk_manager):
@@ -52,6 +53,12 @@ class Challenge:
             self.cache.change_online_status(account_id, online, last_seen)
         return
 
+    def block_unblock(self, command):
+        id_1, id_2, block = command.split(" ")
+        id_1, id_2 = int(id_1), int(id_2)
+        block = False if block=="0" else True
+        self.cache.block_unblock(id_1=id_1, id_2=id_2, block=block)
+        return
+
     def follow_unfollow(self, command):
         pass
-

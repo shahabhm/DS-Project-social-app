@@ -16,7 +16,7 @@ class cache_manager:
     start_1 = 1
     start_0 = 1
     # note: we have to declare this for every account because an unblock need recalculating the whole dataset
-    # blocked_bloom = []
+    blocked_bloom = []
     # blocked bloom size is of order of one cache block
     dataset_accounts_count = 10000
 
@@ -41,7 +41,10 @@ class cache_manager:
         return
 
     def change_online_status(self, account_id: int, online: bool, last_seen: str):
-        pass
+        acc = self.find_account(account_id)
+        acc.status = online
+        if online:
+            acc.last_seen = last_seen
 
     def find_account(self, id: int) -> account:
         res = None
@@ -95,6 +98,23 @@ class cache_manager:
             res.append(user)
         self.dm.disk_seek(start)
         self.dm.write_block(res)
+        return
+
+    # id_1 blocks/ unblocks id_2
+    def block_unblock(self, id_1: int, id_2: int, block: bool):
+        if block:
+            # for blocked account
+            acc = self.find_account(id_1)
+            acc.connections.remove(str(id_2))
+            acc.blocked.add(str(-id_2))
+            self.update_bloom(acc)
+            # now for blocked account
+            acc = self.find_account(id_2)
+            acc.connections.remove(str(id_1))
+            acc.blocked_by.add("*" + str(id_1))
+            self.blocked_bloom[id_1] = self.update_bloom(acc.blocked)
+        else:
+            pass
 
     def fetch_block_for_id(self, id: int):
         seek = id - 50
@@ -104,3 +124,7 @@ class cache_manager:
             seek = self.dataset_accounts_count - 100
         self.dm.seek(seek)
         return self.dm.read_block(), seek
+
+    # this creates the bloom based on the blocked and blocker accounts for an account
+    def update_bloom(self, acc:account):
+        pass

@@ -13,7 +13,16 @@ class account:
             self.status = False
         else:
             self.status = True
-        self.connections = dict(data[2:-3]) # python dict is the best data structure for search
+        self.connections = set()
+        self.blocked = set()
+        self.blocked_by = set()
+        for relation in data[2:-3]:
+            if relation.startswith("-"):
+                self.blocked.add(relation)
+            elif relation.startswith("*"):  # means this is blocked by another account
+                self.blocked_by.add(relation)
+            else:
+                self.connections.add(relation)
 
     def __hash__(self):
         # necessary for instances to behave sanely in dicts and sets.
@@ -27,4 +36,5 @@ class account:
             online = " online "
         else:
             online = " offline "
-        return str(self.id) + " " + self.name + " ".join(self.connections) + online + str(self.last_seen)
+        return str(self.id) + " " + self.name + " ".join(self.connections) +\
+               " -".join(self.blocked) + " *".join(self.blocked_by) + online + str(self.last_seen)
