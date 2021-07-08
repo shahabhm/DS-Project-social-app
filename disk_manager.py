@@ -72,6 +72,7 @@ class DiskManager:
 
         cursor_position = self.disks[disk_name]['cursor'] + delta * self.ENTRY_LENGTH
         if (cursor_position < 0) or (self.disks[disk_name]['size'] * self.ENTRY_LENGTH < cursor_position):
+            print(str(self.disks[disk_name]['size']) + " " + str(self.ENTRY_LENGTH) +" "+ str(cursor_position))
             raise Exception("seek amount is not in range of disk {}.d's size!".format(disk_name))
 
         self.disks[disk_name]['cursor'] = cursor_position
@@ -90,7 +91,7 @@ class DiskManager:
                 "block size limit is {} lines "
                 "but you tried to write {} lines! ".format(data_length, self.BLOCK_SIZE))
 
-        normalized = ""
+        normalized = []
         for d in data:
             d_length = len(d)
             diff = self.ENTRY_LENGTH - d_length - 2
@@ -104,15 +105,12 @@ class DiskManager:
                     d += " "
                 d += "$"
                 normalized.append(d)
-
-        joined_data = '\n'.join(normalized) + '\n'
-
+        joined_data = '\r'.join(normalized) + '\r'
         f = open(self.disks[disk_name]['path'], "r+")
         f.seek(self.disks[disk_name]['cursor'])
         f.write(joined_data)
         self.disks[disk_name]['cursor'] = f.tell()
         f.close()
-
         self.cost += self.WRITE_BLOCK_COST
 
         return 1

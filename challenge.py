@@ -30,10 +30,12 @@ class Challenge:
                     self.find_online_friends(line.replace(self.code_find_online_friends, "", 1))
                 elif line.startswith(self.code_recommend_accounts_to_follow):
                     self.recommend_new_accounts(line.replace(self.code_recommend_accounts_to_follow, "", 1))
+                elif line.startswith("end"):
+                    print(f"total cost is : {self.dm.cost}")
                 else:
-                    print("unknown command code")
-            except:
-                print(f"encountered error in line: {line}")
+                    print(f"unknown command: {line}")
+            except IndexError as e:
+                print("error at line: {line} : {e}")
 
     def create_account(self, command):
         new_id, name, last_seen = command.split(" ")
@@ -44,8 +46,10 @@ class Challenge:
         else:
             self.cache.create_new_account(new_account=new_account_string,
                                           new_account_id=new_id)
+        return
 
     def change_online_status(self, command):
+        print(command.split(" "))
         account_id, online, last_seen = command.split(" ")
         if online == "0":
             online = False
