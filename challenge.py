@@ -32,6 +32,7 @@ class Challenge:
                     self.recommend_new_accounts(line.replace(self.code_recommend_accounts_to_follow, "", 1))
                 elif line.startswith("end"):
                     print(f"total cost is : {self.dm.cost}")
+                    return
                 else:
                     print(f"unknown command: {line}")
             except IndexError as e:
@@ -49,7 +50,6 @@ class Challenge:
         return
 
     def change_online_status(self, command):
-        print(command.split(" "))
         account_id, online, last_seen = command.split(" ")
         if online == "0":
             online = False
@@ -90,8 +90,14 @@ class Challenge:
         res, history = self.cache.recommend_new_accounts(account_id=account_id, time=time, recommend_history=history)
         # history = self.convert_history_to_string(account_id, history)
         print("recommended accounts  account:priority")
+        temp_str = ""
+        i =0
         for x in res:
-            print(f"{x}")
+            temp_str+=(f"{x[0]}:{x[1]} ")
+            i+=1
+            if i==20:
+                break
+        print(temp_str)
         return
 
     def convert_history_to_string(self, account_id: int, history:dict):

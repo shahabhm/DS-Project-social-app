@@ -33,5 +33,5 @@ class account:
             online = "online "
         else:
             online = "offline "
-        return str(self.id) + " " + self.name + " " + str(len(self.connections)) +" " +  " ".join(self.connections) + \
+        return str(self.id) + " " + self.name + " " + str(len(self.connections)) +" " + " ".join(self.connections) + \
             " " + " ".join(self.blocked) + online + str(self.last_seen)

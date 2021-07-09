@@ -1,6 +1,5 @@
-import itertools
 from account import account
-from bloomfilter import bloomfilter
+from bloom_filter2 import BloomFilter
 import heapq
 
 
@@ -9,7 +8,7 @@ class cache_manager:
     most_accessed_accounts_limit = 25
     recently_created_accounts = {}
     recently_created_accounts_limit = 10
-    recommend_new_friend_crawler_limit = 400
+    recommend_new_friend_crawler_limit = 5000
     recommend_new_friend_result_limit = 20
     ten_days_epoch = 10 * 24 * 60 * 60
     cache_block_0 = {}
@@ -28,6 +27,8 @@ class cache_manager:
 
     def __init__(self, disk_manager):
         self.dm = disk_manager
+        for i in range(0, self.dataset_accounts_count):
+            self.blocked_bloom.append(BloomFilter(max_elements=11000, error_rate=0.1))
         # self.initialize_most_used_accounts()
         #  self.recommend_cache = disk_manager.new("recommend", 100000)
         # for i in range(0, 101):
@@ -47,18 +48,16 @@ class cache_manager:
             overflow_amount = int(self.recently_created_accounts_limit / 2)
             res = []
             for i in range(self.dataset_accounts_count + 1, self.dataset_accounts_count + overflow_amount + 1):
-                print(i)
                 temp = str(self.recently_created_accounts.pop(i))
-                print(temp)
                 res.append(temp)
                 print("removing account from cache: " + temp)
+            self.blocked_bloom.append(BloomFilter(11000,0.1))
             # for i in range(1, int(self.recently_created_accounts_limit / 2)):
             #     res.append(self.recently_created_accounts.get(self.dataset_accounts_count + i))
             # self.dm.disk_seek(disk_name="dataset", delta=
             # self.dataset_accounts_count - self.dm.disks["dataset"]['cursor']/self.dm.ENTRY_LENGTH)  # go to the end of the dataset
             self.seek_line(line=self.dataset_accounts_count, disk="dataset")
             self.dm.write_block("dataset", res)
-            print(res)
             self.dataset_accounts_count += overflow_amount
 
         self.recently_created_accounts[new_account_id] = acc
@@ -167,10 +166,17 @@ class cache_manager:
 
     # this creates the bloom based on the blocked and blocker accounts for an account
     def update_bloom(self, acc: account):
-        pass
+        new_bloom = BloomFilter(max_elements=11000, error_rate=0.1)
+        for blc in acc.blocked:
+            new_bloom.add(-int(blc))
+        self.blocked_bloom[acc.id-1] = new_bloom
 
     # true if dest blocked acc
     def is_blocked(self, blocker: int, blocked: int) -> bool:
+        try:
+            assert blocked in self.blocked_bloom[blocker-1]
+        except:
+            return False
         acc = self.find_account(blocker, lock=False, dirty=False)
         if acc.blocked.__contains__(str(-blocked)):
             return True
@@ -187,7 +193,7 @@ class cache_manager:
                 try:
                     acc.connections.add(str(id_2))
                     if str(id_2) == "":
-                        print("errer")
+                        print("error")
                 except:
                     print(f"there was a problem account {id_1} could'nt follow {id_2}")
         else:  # unfollow
@@ -249,8 +255,8 @@ class cache_manager:
         ans = []
         for x in {key: value for key, value in res.items() if
                   value in heapq.nlargest(10, res.values())}:
-            if len(ans)> 5:
-                if res[x]==1:
+            if len(ans) > 5:
+                if res[x] == 1:
                     continue
             ans.append((x, res[x]))
         return ans, recommend_history
