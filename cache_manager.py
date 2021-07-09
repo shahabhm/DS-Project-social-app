@@ -29,7 +29,7 @@ class cache_manager:
         self.dm = disk_manager
         for i in range(0, self.dataset_accounts_count):
             self.blocked_bloom.append(BloomFilter(max_elements=11000, error_rate=0.1))
-        # self.initialize_most_used_accounts()
+        self.initialize_most_used_accounts()
         #  self.recommend_cache = disk_manager.new("recommend", 100000)
         # for i in range(0, 101):
         #     res = []
@@ -243,7 +243,11 @@ class cache_manager:
                         recommend_history[person] = -1
                         pass
                     else:
-                        res[person] = self.calculate_adj_score(acc_1=acc, acc_2=friend_acc, acc_3=temp_acc)
+                        if person in res:
+                            res[person] += self.calculate_adj_score(acc_1=acc, acc_2=friend_acc, acc_3=temp_acc)
+                        else:
+                            res[person] = self.calculate_adj_score(acc_1=acc, acc_2=friend_acc, acc_3=temp_acc)
+
                 elif person in res:
                     res[person] += self.calculate_adj_score(acc_1=acc, acc_2=friend_acc, acc_3=temp_acc)
                     recommend_history[person] = time
