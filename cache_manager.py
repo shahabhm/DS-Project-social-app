@@ -1,7 +1,7 @@
 import itertools
 from account import account
 from bloomfilter import bloomfilter
-
+import heapq
 
 class cache_manager:
     most_accessed_accounts = {}
@@ -24,6 +24,7 @@ class cache_manager:
 
     def __init__(self, disk_manager):
         self.dm = disk_manager
+        self.initialize_most_used_accounts()
         #  self.recommend_cache = disk_manager.new("recommend", 100000)
         # for i in range(0, 101):
         #     res = []
@@ -181,6 +182,8 @@ class cache_manager:
             else:
                 try:
                     acc.connections.add(str(id_2))
+                    if str(id_2) == "":
+                        print("errer")
                 except:
                     print(f"there was a problem account {id_1} could'nt follow {id_2}")
         else:  # unfollow
@@ -195,18 +198,47 @@ class cache_manager:
         online = []
         offline = []
         for friend in acc.connections:
-            friend_acc = self.find_account(int(friend), lock=False, dirty=False)
-            if friend_acc.status:
-                online.append(friend)
-            else:
-                offline.append(friend)
+            try:
+                friend_acc = self.find_account(int(friend), lock=False, dirty=False)
+                if friend_acc.status:
+                    online.append(friend)
+                else:
+                    offline.append(friend)
+            except:
+                print("error in finding friend account")
         print(f"online friends of account {acc.id} are : {online}")
         print(f"offline friends of account {acc.id} are : {offline}")
         return
 
     # do we need a new disk for this one?
     def recommend_new_accounts(self, account_id: int, time: int):
-        pass
+        acc = self.find_account(acc_id=account_id, lock=False, dirty=False)
+        res = {}
+        for friend in acc.connections:
+            for person in self.find_account(int(friend), lock=False, dirty=False).connections:
+                
+                person = int(person)
+                if person in res:
+                    res[person] += 1
+                else:
+                    res[person] = 1
+
 
     def seek_line(self, disk: str, line: int):
         self.dm.disk_seek(disk, line - self.dm.disks["dataset"]['cursor'] / self.dm.ENTRY_LENGTH)
+
+    def initialize_most_used_accounts(self):
+        temp = {}
+        for i in range(1, self.dataset_accounts_count+1):
+            temp[i] = 0
+        for i in range(0, 100):
+            for line in self.dm.read_block("dataset"):
+                acc = account(line)
+                temp[acc.id] += len(acc.connections)
+                for connection in acc.connections:
+                    if int (connection) > 0:
+                        temp[int(connection)] += 1
+        for x in {key: value for key, value in temp.items() if value in heapq.nlargest(self.most_accessed_accounts_limit
+        ,temp.values())}:
+            self.most_accessed_accounts[x] = self.find_account(x,lock=False, dirty=False)
+        pass

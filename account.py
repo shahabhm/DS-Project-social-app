@@ -30,8 +30,8 @@ class account:
 
     def __str__(self):
         if self.status:
-            online = " online "
+            online = "online "
         else:
-            online = " offline "
-        return str(self.id) + " " + self.name + " " + str(len(self.connections)) + " " + " ".join(self.connections) + \
+            online = "offline "
+        return str(self.id) + " " + self.name + " " + str(len(self.connections)) +" " +  " ".join(self.connections) + \
             " " + " ".join(self.blocked) + online + str(self.last_seen)
