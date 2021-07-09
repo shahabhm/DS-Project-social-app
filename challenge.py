@@ -81,7 +81,31 @@ class Challenge:
         self.cache.find_online_friends(account_id)
         return
 
-    def recommend_new_accounts(self, command):
-        account_id, time = int(command.split(" "))  # todo: will this work?
-        self.cache.recommend_new_accounts(account_id=account_id, time=time)
+    def recommend_new_accounts(self, command:str):
+        command = command.split(" ")
+        account_id, time = int(command[0]), int(command[1])
+        # history = self.cache.get_recommend_history_string(account_id)
+        # history = self.convert_string_to_history(history)
+        history = {132:-1, 3533:-1, 7441:-1, 2671:-1, 5843:-1, 4590:-1}
+        res, history = self.cache.recommend_new_accounts(account_id=account_id, time=time, recommend_history=history)
+        # history = self.convert_history_to_string(account_id, history)
+        print("recommended accounts  account:priority")
+        for x in res:
+            print(f"{x}")
         return
+
+    def convert_history_to_string(self, account_id: int, history:dict):
+        res = str(account_id)
+        for x, y in history.items():
+            res += " " + str(x) + ":" + str(y)
+        return res
+
+    def convert_string_to_history(self,history:str) -> dict:
+        history = history.split(" ")
+        res = {}
+        history.pop(0)
+        for line in history:
+            x, y = line.split(":")
+            x, y = int(x), int(y)
+            res[x] = y
+        return res

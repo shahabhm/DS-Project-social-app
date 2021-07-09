@@ -3,11 +3,15 @@ from account import account
 from bloomfilter import bloomfilter
 import heapq
 
+
 class cache_manager:
     most_accessed_accounts = {}
     most_accessed_accounts_limit = 25
     recently_created_accounts = {}
     recently_created_accounts_limit = 10
+    recommend_new_friend_crawler_limit = 400
+    recommend_new_friend_result_limit = 20
+    ten_days_epoch = 10 * 24 * 60 * 60
     cache_block_0 = {}
     cache_block_1 = {}
     dirty_0: bool = False
@@ -24,7 +28,7 @@ class cache_manager:
 
     def __init__(self, disk_manager):
         self.dm = disk_manager
-        self.initialize_most_used_accounts()
+        # self.initialize_most_used_accounts()
         #  self.recommend_cache = disk_manager.new("recommend", 100000)
         # for i in range(0, 101):
         #     res = []
@@ -166,9 +170,9 @@ class cache_manager:
         pass
 
     # true if dest blocked acc
-    def is_blocked(self, account_id: int, sec_id: int) -> bool:
-        acc = self.find_account(account_id, lock=False, dirty=False)
-        if acc.blocked.__contains__(str(-sec_id)):
+    def is_blocked(self, blocker: int, blocked: int) -> bool:
+        acc = self.find_account(blocker, lock=False, dirty=False)
+        if acc.blocked.__contains__(str(-blocked)):
             return True
         return False
 
@@ -177,7 +181,7 @@ class cache_manager:
         if follow:
             if self.is_blocked(id_1, id_2):
                 print("can't follow: you have blocked this user")
-            elif self.is_blocked(account_id=id_2, sec_id=id_1):
+            elif self.is_blocked(blocker=id_2, blocked=id_1):
                 print("can't follow: you have been blocked by this user")
             else:
                 try:
@@ -210,35 +214,80 @@ class cache_manager:
         print(f"offline friends of account {acc.id} are : {offline}")
         return
 
-    # do we need a new disk for this one?
-    def recommend_new_accounts(self, account_id: int, time: int):
+    def recommend_new_accounts(self, account_id: int, time: int, recommend_history: dict):
         acc = self.find_account(acc_id=account_id, lock=False, dirty=False)
         res = {}
+        new_declines = {}
         for friend in acc.connections:
-            for person in self.find_account(int(friend), lock=False, dirty=False).connections:
-                
+            friend_acc = self.find_account(int(friend), lock=False, dirty=False)
+            for person in friend_acc.connections:
                 person = int(person)
-                if person in res:
-                    res[person] += 1
+                if acc.blocked.__contains__(-person) or acc.connections.__contains__(
+                        person):  # this person has been blocked or is followed
+                    continue
+                if person == account_id:
+                    continue
+                temp_acc = self.find_account(person, lock=False, dirty=False)
+                if self.is_blocked(person, account_id):
+                    pass  # this person blocked the account
+                elif person in recommend_history:
+                    if recommend_history[person] == -1:
+                        pass
+                    if recommend_history[person] - time > self.ten_days_epoch:
+                        recommend_history[person] = -1
+                        pass
+                    else:
+                        res[person] = self.calculate_adj_score(acc_1=acc, acc_2=friend_acc, acc_3=temp_acc)
+                elif person in res:
+                    res[person] += self.calculate_adj_score(acc_1=acc, acc_2=friend_acc, acc_3=temp_acc)
+                    recommend_history[person] = time
                 else:
-                    res[person] = 1
-
+                    res[person] = self.calculate_adj_score(acc_1=acc, acc_2=friend_acc, acc_3=temp_acc)
+                    recommend_history[person] = time
+            if len(res) > self.recommend_new_friend_crawler_limit:
+                break
+        ans = []
+        for x in {key: value for key, value in res.items() if
+                  value in heapq.nlargest(10, res.values())}:
+            if len(ans)> 5:
+                if res[x]==1:
+                    continue
+            ans.append((x, res[x]))
+        return ans, recommend_history
 
     def seek_line(self, disk: str, line: int):
         self.dm.disk_seek(disk, line - self.dm.disks["dataset"]['cursor'] / self.dm.ENTRY_LENGTH)
 
     def initialize_most_used_accounts(self):
         temp = {}
-        for i in range(1, self.dataset_accounts_count+1):
+        for i in range(1, self.dataset_accounts_count + 1):
             temp[i] = 0
         for i in range(0, 100):
             for line in self.dm.read_block("dataset"):
                 acc = account(line)
                 temp[acc.id] += len(acc.connections)
                 for connection in acc.connections:
-                    if int (connection) > 0:
+                    if int(connection) > 0:
                         temp[int(connection)] += 1
         for x in {key: value for key, value in temp.items() if value in heapq.nlargest(self.most_accessed_accounts_limit
-        ,temp.values())}:
-            self.most_accessed_accounts[x] = self.find_account(x,lock=False, dirty=False)
+                , temp.values())}:
+            self.most_accessed_accounts[x] = self.find_account(x, lock=False, dirty=False)
         pass
+
+    def get_recommend_history_string(self, account_id) -> str:
+        self.seek_line("recommend", account_id)
+        return self.dm.read_block(account_id)[0]  # we only need one line of this
+
+    def set_recommend_history_string(self, account_id, string: str):
+        data = [string]
+        self.dm.write_block(disk_name="recommend", data=data)
+
+    def calculate_adj_score(self, acc_1: account, acc_2: account, acc_3: account) -> int:
+        score = 1
+        if acc_3.connections.__contains__(str(acc_1.id)):
+            score += 3
+        if acc_3.connections.__contains__(str(acc_2.id)):
+            score += 2
+        if acc_2.connections.__contains__(str(acc_1.id)):
+            score += 5
+        return score
