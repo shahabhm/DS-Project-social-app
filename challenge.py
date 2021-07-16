@@ -30,10 +30,13 @@ class Challenge:
                     self.find_online_friends(line.replace(self.code_find_online_friends, "", 1))
                 elif line.startswith(self.code_recommend_accounts_to_follow):
                     self.recommend_new_accounts(line.replace(self.code_recommend_accounts_to_follow, "", 1))
+                elif line.startswith("end"):
+                    print(f"total cost is : {self.dm.cost}")
+                    return
                 else:
-                    print("unknown command code")
-            except:
-                print(f"encountered error in line: {line}")
+                    print(f"unknown command: {line}")
+            except IndexError as e:
+                print("error at line: {line} : {e}")
 
     def create_account(self, command):
         new_id, name, last_seen = command.split(" ")
@@ -44,6 +47,7 @@ class Challenge:
         else:
             self.cache.create_new_account(new_account=new_account_string,
                                           new_account_id=new_id)
+        return
 
     def change_online_status(self, command):
         account_id, online, last_seen = command.split(" ")
@@ -77,7 +81,37 @@ class Challenge:
         self.cache.find_online_friends(account_id)
         return
 
-    def recommend_new_accounts(self, command):
-        account_id, time = int(command.split(" "))  # todo: will this work?
-        self.cache.recommend_new_accounts(account_id=account_id, time=time)
+    def recommend_new_accounts(self, command:str):
+        command = command.split(" ")
+        account_id, time = int(command[0]), int(command[1])
+        # history = self.cache.get_recommend_history_string(account_id)
+        # history = self.convert_string_to_history(history)
+        history = {132:-1, 3533:-1, 7441:-1, 2671:-1, 5843:-1, 4590:-1}
+        res, history = self.cache.recommend_new_accounts(account_id=account_id, time=time, recommend_history=history)
+        # history = self.convert_history_to_string(account_id, history)
+        print("recommended accounts  account:priority")
+        temp_str = ""
+        i =0
+        for x in res:
+            temp_str+=(f"{x[0]}:{x[1]} ")
+            i+=1
+            if i==20:
+                break
+        print(temp_str)
         return
+
+    def convert_history_to_string(self, account_id: int, history:dict):
+        res = str(account_id)
+        for x, y in history.items():
+            res += " " + str(x) + ":" + str(y)
+        return res
+
+    def convert_string_to_history(self,history:str) -> dict:
+        history = history.split(" ")
+        res = {}
+        history.pop(0)
+        for line in history:
+            x, y = line.split(":")
+            x, y = int(x), int(y)
+            res[x] = y
+        return res

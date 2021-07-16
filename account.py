@@ -9,10 +9,10 @@ class account:
         self.id = int(data[0])
         self.name = data[1]
         self.last_seen = int(data[-1])
-        if data[-1] == "online":
-            self.status = False
-        else:
+        if data[-2] == "online":
             self.status = True
+        else:
+            self.status = False
         self.connections = set()
         self.blocked = set()
         for relation in data[3:-2]:
@@ -30,8 +30,8 @@ class account:
 
     def __str__(self):
         if self.status:
-            online = " online "
+            online = "online "
         else:
-            online = " offline "
-        return str(self.id) + " " + self.name + " " + str(len(self.connections)) + " " + " ".join(self.connections) + \
-            " -".join(self.blocked) + online + str(self.last_seen)
+            online = "offline "
+        return str(self.id) + " " + self.name + " " + str(len(self.connections)) +" " + " ".join(self.connections) + \
+            " " + " ".join(self.blocked) + online + str(self.last_seen)
